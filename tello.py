@@ -89,7 +89,7 @@ class Tello:
         while True:
             try:
                 err_cnt = 0
-                res_string = self.socket_video.recv(2048)
+                res_string = self.socket_camera.recv(2048)
                 packet_data += res_string
                 
                 if len(res_string) != 1460: # frame의 끝이 아니면,

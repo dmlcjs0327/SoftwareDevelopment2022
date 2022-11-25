@@ -330,34 +330,42 @@ class TelloUI:
     def on_keypress_w(self, event):
         print("[telloUI] on_keypress_w: up {} m".format(self.distance))
         self.tello.move('up',self.distance)
+        time.sleep(0.05)
 
     def on_keypress_s(self, event):
         print("[telloUI] on_keypress_s: down {} m".format(self.distance))
         self.tello.move('down',self.distance)
+        time.sleep(0.05)
 
     def on_keypress_a(self, event):
         print("[telloUI] on_keypress_a: ccw {} degree".format(self.degree))
         self.tello.rotate_ccw(self.degree)
+        time.sleep(0.05)
 
     def on_keypress_d(self, event):
         print("[telloUI] on_keypress_d: cw {} degree".format(self.degree))
         self.tello.rotate_cw(self.degree)
+        time.sleep(0.05)
 
     def on_keypress_up(self, event):
         print("[telloUI] on_keypress_up: forward {} m".format(self.distance))
         self.tello.move('forward',self.distance)
+        time.sleep(0.05)
 
     def on_keypress_down(self, event):
         print("[telloUI] on_keypress_down: backward {} m".format(self.distance))
         self.tello.move('back',self.distance)
+        time.sleep(0.05)
 
     def on_keypress_left(self, event):
         print("[telloUI] on_keypress_left: left {} m".format(self.distance))
         self.tello.move('left',self.distance)
+        time.sleep(0.05)
 
     def on_keypress_right(self, event):
         print("[telloUI] on_keypress_right: right {} m".format(self.distance))
         self.tello.move('right',self.distance)
+        time.sleep(0.05)
 
     def onClose(self):
         try:
