@@ -171,7 +171,6 @@ class Tello:
         self.get_GUI_Image_thread.start() #이미지 편집 + 화면 이미지를 갱신하는 스레드
         # self.run_yolo_thread.start()
     
-    
     #ToF 값을 업데이트하는 함수
     def _thread_tof(self):
         print("[Tello] ToF 시작")
