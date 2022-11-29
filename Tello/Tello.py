@@ -1,16 +1,20 @@
+import threading
 from Basemodel import Drone
 import TelloController
 import TelloMonocular
 import TelloTOF
 import TelloMotor
+import TelloReceiver
 
 class Tello(Drone):
     
-    def __init__(self) -> None:
-        self.controller = TelloController.TelloController()
-        self.monocular = TelloMonocular.TelloMonocular()
-        self.tof = TelloTOF.TelloTOF()
-        self.motor = TelloMotor.TelloMotor()
+    def __init__(self,stop_event:threading.Event) -> None:
+        self.__stop_event = stop_event
+        self.__controller = TelloController.TelloController()
+        self.__monocular = TelloMonocular.TelloMonocular()
+        self.__tof = TelloTOF.TelloTOF()
+        self.__motor = TelloMotor.TelloMotor()
+        self.__receiver = TelloReceiver()
         
         self.object_val = None
         self.tof_val = None
@@ -38,3 +42,10 @@ class Tello(Drone):
     
     def pop_queue():
         pass
+
+    def get_stop_event(self):
+        return self.__stop_event
+    
+    def get_receiver(self):
+        return self.__receiver
+    
