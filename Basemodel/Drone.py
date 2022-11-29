@@ -2,31 +2,35 @@ from abc import *
 
 
 class Drone(metaclass=ABCMeta):
-    
+
     @abstractmethod
-    def set_connection(self):
-        pass
-    
-    @abstractmethod
-    def create_object_val(self):
-        pass
-    
-    @abstractmethod
-    def get_object_val():
+    def __set_connection():
         pass
 
     @abstractmethod
-    def set_tof_val():
+    def __ceate_parts():
         pass
     
     @abstractmethod
-    def set_window_coors():
+    def __create_object_val():
         pass
     
     @abstractmethod
-    def insert_queue():
+    def __get_object_val():
+        pass
+
+    @abstractmethod
+    def __set_tof_val():
         pass
     
     @abstractmethod
-    def pop_queue():
+    def __set_window_coors():
+        pass
+    
+    @abstractmethod
+    def __insert_queue():
+        pass
+    
+    @abstractmethod
+    def __pop_queue():
         pass

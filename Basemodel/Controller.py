@@ -11,13 +11,13 @@ class Controller(metaclass=ABCMeta):
     """
     
     @abstractmethod
-    def take_from_controller(self): 
+    def __take_from_controller(self): 
         pass
     
     @abstractmethod
-    def check_controller_value(self):
+    def __check_controller_value(self):
         pass
     
     @abstractmethod
-    def save_to_drone(self):
+    def __save_to_drone(self):
         pass

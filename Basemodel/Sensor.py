@@ -11,13 +11,13 @@ class Sensor(metaclass=ABCMeta):
     """
     
     @abstractmethod
-    def take_from_sensor(self): 
+    def __take_from_sensor(self): 
         pass
     
     @abstractmethod
-    def check_sensor_value(self):
+    def __check_sensor_value(self):
         pass
     
     @abstractmethod
-    def save_to_drone(self):
+    def __save_to_drone(self):
         pass

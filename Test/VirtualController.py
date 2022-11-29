@@ -1,8 +1,12 @@
 from Tello import Tello
-from Tello import TelloReceiver
+import sys
+from PIL import Image, ImageTk
 import tkinter
 import threading
+import cv2
 from time import sleep
+
+
 
 class VirtualController:
     """
@@ -17,18 +21,21 @@ class VirtualController:
 
 
 
-    #=====TestGUI의 인스턴스를 생성시 실행될 함수=====
-    def __init__(self, tello:Tello) -> None:
+    #=====VirtualController의 인스턴스를 생성시 실행될 함수=====
+    def __init__(self, tello:Tello.Tello) -> None:
 
         #TelloController 및 stop_event
-        self.__receiver:TelloReceiver = tello.get_receiver()
+        self.__tello = tello
         self.__stop_event:threading.Event = tello.get_stop_event()
 
         #Tello 조작시 동작범위
         self.__cm = 20
         self.__degree = 30
 
-        #Tello에게 메세지 동시 전달을 방지하기 위한 lock
+        #Controller의 명령을 저장할 queue
+        self.__controller_queue = []
+
+        #queue에 동시접근을 방지하기 위한 lock
         self.__lock = threading.Lock()
 
         #화면 기본 설정
@@ -37,7 +44,7 @@ class VirtualController:
         self.__root.wm_protocol("WM_DELETE_WINDOW", self.__onClose) #종료버튼을 클릭시 실행할 함수 설정
 
         #화면에 띄울 문구 설정
-        self.__text_tof = tkinter.Label(self.__root, text= "ToF: {} cm".format(self.tof), font='Helvetica 10 bold') ##re
+        self.__text_tof = tkinter.Label(self.__root, text= "ToF: None", font='Helvetica 10 bold') ##re
         self.__text_tof.pack(side='top')
 
         self.__text_keyboard = tkinter.Label(self.__root, justify="left", text="""
@@ -47,6 +54,9 @@ class VirtualController:
         D - Rotate Tello Clockwise\t\tArrow Right - Move Tello Right
         """)
         self.__text_keyboard.pack(side="top")
+
+        #영상을 출력하기 위한 panel 선언
+        self.__panel_image = None
 
         #착륙 버튼
         self.__btn_landing = tkinter.Button(self.__root, text="Land", relief="raised", command=self.__land)
@@ -69,24 +79,19 @@ class VirtualController:
         self.__keyboard_connection.pack(side="bottom")
         self.__keyboard_connection.focus_set()
 
+        #실행될 스레드 선언
         self.__thread_stay_connection = threading.Thread(target=self.__func_stay_connection, daemon=True)
         self.__thread_stay_connection.start()
 
-        self.__printn("시작")
-        self.__root.mainloop()
+        self.__thread_update_tof = threading.Thread(target=self.__func_update_tof, daemon=True)
+        self.__thread_update_tof.start()
+
+        self.__thread_print_video = threading.Thread(target=self.__func_print_video, daemon=True)
+        self.__thread_print_video.start()
+
+
+        self.__printc("시작")
     
-
-
-    #=====실행내역 출력을 위한 함수=====
-    def __printn(self,msg:str)->None:
-        print("[{}] {}".format(self.__class__.__name__,msg))
-
-    def __printm(self,key:str,action:str)->None:
-        self.__printn("KEYBOARD {}: {} {} cm".format(key, action,self.__cm))
-
-    def __printr(self,key:str,action:str)->None:
-        self.__printn("KEYBOARD {}: {} {} degree".format(key, action,self.__degree))
-
 
 
     #=====버튼을 클릭했을 때 실행될 함수들=====
@@ -147,34 +152,111 @@ class VirtualController:
 
 
 
-    #=====__thread_stay_connection에서 실행될 함수=====
+    #=====스레드에서 실행될 함수=====
+    #Tello에게 15초 간격으로 command를 전송하는 함수
     def __func_stay_connection(self):
         """
         Tello는 15초 이상 전달받은 명령이 없을시 자동 착륙하기 때문에,
         이를 방지하기 위해 5초 간격으로 Tello에게 "command" 명령을 전송
         """
-        while not self.__stop_event.is_set():
-            self.__send_cmd("command")
-            sleep(5)
+        try:
+            while not self.__stop_event.is_set():
+                self.__send_cmd("command")
+                sleep(5)
+
+        except Exception as e:
+            self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
         
+        self.__printf("종료",sys._getframe().f_code.co_name)
+    
+    #Tello에게서 0.5초 간격으로 ToF값을 받아와 GUI를 갱신하는 함수
+    def __func_update_tof(self):
+        try:
+            while not self.__stop_event.is_set():
+                tof = self.__tello.get_tof_val()
+                self.__text_tof.config(text = "ToF: {} cm".format(tof))
+                sleep(0.2)
+        except Exception as e:
+            self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
+        
+        self.__printf("종료",sys._getframe().f_code.co_name)
+
+    #객체인식 화면을 출력하는 함수
+    def __func_print_video(self):
+        try:
+            while not self.__stop_event.is_set():
+                image = self.__tello.get_image_YOLO()
+
+                if self.__panel_image is None: 
+                    self.__panel_image:tkinter.Label = tkinter.Label(image=image)
+                    self.__panel_image.image = image
+                    self.__panel_image.pack(side="right", padx=10, pady=10)
+                
+                else:
+                    self.__panel_image.configure(image=image)
+                    self.__panel_image.image = image
+
+        except Exception as e:
+            self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
+        
+        self.__printf("종료",sys._getframe().f_code.co_name)
+    
 
 
-    #=====Tello에게 명령을 전송하는 함수=====
+    #=====Tello에게 보낼 명령을 controller queue에 저장하는 함수=====
     def __send_cmd(self, msg:str)->str:
         self.__lock.acquire() #락 획득
         try:
-            encoding_msg = msg.encode('utf-8')
-            self.__receiver.insert_recv_queue(encoding_msg)
+            data = msg.encode('utf-8')
+            self.insert_controller_queue(data)
+
         except Exception as e:
-            self.__printn(e)
+            self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
+
         self.__lock.release() #락 해제
+
+
+
+    #=====controller_queue에 접근하는 함수=====
+    def insert_controller_queue(self,data:str)->bool:
+        self.__lock.acquire()
+        self.__controller_queue.append(data)
+        self.__lock.release()
+    
+    def pop_controller_queue(self)->str:
+        self.__lock.acquire()
+        if len(self.__controller_queue) == 0: 
+            self.__lock.release()
+            return None
+        return_data = self.__controller_queue.pop(0)
+        self.__lock.release()
+        return return_data
 
 
 
     #=====종료버튼을 클릭시 실행할 함수=====
     def __onClose(self):
+        self.__land() #텔로에게 착륙명령 전달
         self.__stop_event.set() #stop_event를 실행
         self.__root.quit() #화면 종료
-        self.__land() #텔로 착륙
-        self.__printn("종료")
+        self.__printc("종료")
         exit()
+
+
+
+    #=====실행내역 출력을 위한 함수=====
+    #클래스명을 포함하여 출력하는 함수
+    def __printc(self,msg:str)->None:
+        print("[{}] {}".format(self.__class__.__name__,msg))
+    
+    #클래스명 + 함수명을 출력하는 함수
+    def __printf(self,msg:str,fname:str)->None:
+        self.__printc("[{}]: {}".format(fname, msg))
+
+    #직선이동 명령을 출력하는 함수
+    def __printm(self,key:str,action:str)->None:
+        self.__printc("KEYBOARD {}: {} {} cm".format(key, action,self.__cm))
+
+    #회전 명령을 출력하는 함수
+    def __printr(self,key:str,action:str)->None:
+        self.__printc("KEYBOARD {}: {} {} degree".format(key, action,self.__degree))
