@@ -4,17 +4,14 @@ import numpy as np
 """
 H.264: 2003년에 발표된 동영상 표준 규격으로, 텔로에서도 사용
 """    
-#H.264 동영상 스트림 디코딩을 위한 객체
-
     
 #입력된 bytes를 frame으로 디코딩 후, 이를 모아 list로 반환 
-def h264_decode(packet_data: bytes)->list:
+def decode(decoder: h264decoder, packet_data: bytes):
     
-
     res_frame_list = []
-    frames = h264decoder.decode(packet_data) #입력받은 raw H.264 data 배열을 디코딩
+    frames = decoder.decode(packet_data) #입력받은 raw H.264 data 배열을 디코딩
 
-    for framedata in frames: #framedata는 4개 요소의 튜플로 구성
+    for framedata in frames: # framedata는 4개 요소의 튜플로 구성
         frame, width, height, linesize = framedata
 
         if frame is not None:

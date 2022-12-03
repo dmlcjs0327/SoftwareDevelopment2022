@@ -3,21 +3,23 @@ from abc import *
 
 class Sensor(metaclass=ABCMeta):
     
-    """_summary_
-    1) take_from_sensor
-    2) check_sensor_value
-    3) save_to_drone
-    순으로 실행
-    """
-    
     @abstractmethod
-    def __take_from_sensor(self): 
+    def __take_data_from_sensor(self): 
+        """
+        센서로부터 data를 가져온다
+        """
         pass
     
     @abstractmethod
-    def __check_sensor_value(self):
+    def __change_data_to_info(self):
+        """
+        data를 Planner가 이해할 수 있는 info로 변경한다
+        """
         pass
     
     @abstractmethod
-    def __save_to_drone(self):
+    def __save_to_planner(self):
+        """
+        info를 Planner에 저장한다
+        """
         pass

@@ -1,6 +1,16 @@
+"""
+값을 확인하는 함수에 대한 모듈
+"""
+
+
+
 #입력값이 Tello ToF 범위(0~8192)의 값이 맞는지 확인
-def is_tof_val(val:str)->bool:
-    pass
+def is_tof_val(val:str):
+    int_val = int(val)
+    if 0 <= int_val <= 8192:
+        return True
+    else:
+        return False
 
 #입력값이 Tello SDK가 맞는지 확인
 def is_sdk_val(val:str)->bool:
