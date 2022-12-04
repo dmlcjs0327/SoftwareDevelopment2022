@@ -1,3 +1,4 @@
+#완성
 from abc import *
 
 
@@ -7,6 +8,13 @@ class Actor(metaclass=ABCMeta):
     def __take_cmd_from_planner(self): 
         """
         Planner로부터 cmd를 가져온다
+        """
+        pass
+    
+    @abstractmethod
+    def __change_cmd_is_safe(self): 
+        """
+        cmd가 충돌이 발생하지 않는 명령으로 변환한다
         """
         pass
     

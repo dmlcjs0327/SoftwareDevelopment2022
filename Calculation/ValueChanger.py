@@ -1,3 +1,4 @@
+#완성
 """
 값을 변환하는 함수에 대한 모듈
 """
@@ -99,7 +100,45 @@ def change_val_to_coor(object_val):
 
 #입력값(cmd)를 tello sdk 명령으로 변환
 def change_cmd_for_tello(cmd:str):
-    return cmd
+    
+    cmd_list = cmd.split()
+    
+    if cmd_list[0] in ["forward", "back", "right", "left", "cw", "ccw", "up", "down"]:
+        direction = cmd_list[0]
+        weight = int(cmd_list[1])
+        if weight > 100: 
+            weight = 100
+        
+        rc_cmd = None
+        
+        if cmd_list[0] == "forward":
+            rc_cmd = "rc 0 {} 0 0".format(weight)
+            
+        elif cmd_list[0] == "back":
+            rc_cmd = "rc 0 {} 0 0".format(-1*weight)
+        
+        elif cmd_list[0] == "left":
+            rc_cmd = "rc {} 0 0 0".format(weight)
+        
+        elif cmd_list[0] == "right":
+            rc_cmd = "rc {} 0 0 0".format(-1*weight)
+        
+        elif cmd_list[0] == "up":
+            rc_cmd = "rc 0 0 {} 0".format(weight)
+        
+        elif cmd_list[0] == "down":
+            rc_cmd = "rc 0 0 {} 0".format(-1*weight)
+            
+        elif cmd_list[0] == "ccw":
+            rc_cmd = "rc 0 0 0 {}".format(weight)
+        
+        elif cmd_list[0] == "cw":
+            rc_cmd = "rc 0 0 0 {}".format(-1*weight)
+        
+        return rc_cmd.encode('utf-8')
+    
+    else:
+        return cmd.encode("utf-8")
 
 
 def change_windows_to_window(window_list:list, ir_left_up_coor: tuple, ir_right_down_coor:tuple, \
@@ -215,3 +254,27 @@ def change_windows_to_window(window_list:list, ir_left_up_coor: tuple, ir_right_
     
     #(window_left_up_coor, window_right_down_coor)
     return fusion_window
+
+
+#충돌이 발생하지 않는 명령으로 변환
+def change_to_safe_cmd(cmd:str, tof:int, threshold:int):
+
+    cmd_list = cmd.split()
+    
+    #어차피 전방에 대해서만 장애물 감지가 가능하기 때문에, 전방이동만 고려하면 됨
+    if cmd_list[0] !="forward":
+        return cmd
+
+    #장애물까지 남은 안정거리
+    rest_safe_distance = tof - threshold
+    
+    #이동하고자 하는 거리
+    move_distance = cmd_list[1]
+    
+    #계산된 거리
+    new_move_distance = rest_safe_distance - move_distance
+    if new_move_distance < 20:
+        return "stop"
+
+    else:
+        return "forward {}".format(new_move_distance)

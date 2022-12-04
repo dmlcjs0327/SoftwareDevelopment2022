@@ -1,4 +1,4 @@
-#작업 완료
+#완성
 import sys
 import tkinter
 import threading
@@ -31,8 +31,8 @@ class TelloVirtualController:
         self.__thread_stop_event = threading.Event()
 
         #Tello 조작시 동작범위
-        self.__cm = 20
-        self.__degree = 30
+        self.__cm = 50
+        self.__degree = 50
 
         #Controller의 명령을 저장할 queue
         self.__controller_queue = []
@@ -82,16 +82,13 @@ class TelloVirtualController:
         self.__keyboard_connection.focus_set()
 
         #실행될 스레드 선언
-        self.__thread_stay_connection = threading.Thread(target=self.__func_stay_connection, daemon=True)
-        self.__thread_stay_connection.start()
-
         self.__thread_update_tof = threading.Thread(target=self.__func_update_tof, daemon=True)
         self.__thread_update_tof.start()
 
         self.__thread_print_video = threading.Thread(target=self.__func_print_video, daemon=True)
         self.__thread_print_video.start()
 
-
+        #GUI 메인 루프 시작
         self.__printc("시작")
         self.__root.mainloop()
     
@@ -166,28 +163,11 @@ class TelloVirtualController:
 
 
     #=====스레드에서 실행될 함수=====
-    #Tello에게 15초 간격으로 command를 전송하는 함수
-    def __func_stay_connection(self):
-        """
-        Tello는 15초 이상 전달받은 명령이 없을시 자동 착륙하기 때문에,
-        이를 방지하기 위해 5초 간격으로 Tello에게 "command" 명령을 전송
-        """
-        try:
-            while not self.__thread_stop_event.is_set():
-                self.__send_cmd("command")
-                sleep(5)
-
-        except Exception as e:
-            self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
-        
-        self.__printf("종료",sys._getframe().f_code.co_name)
-    
-    
     #Tello에게서 0.3초 간격으로 ToF값을 받아와 GUI를 갱신하는 함수
     def __func_update_tof(self):
         try:
             while not self.__thread_stop_event.is_set():
-                tof = self.__tello.get_tof_val()re
+                tof = self.__planner.get_info_8889Sensor_tof()
                 self.__text_tof.config(text = "ToF: {} cm".format(tof))
                 sleep(0.3)
         except Exception as e:
@@ -200,7 +180,7 @@ class TelloVirtualController:
     def __func_print_video(self):
         try:
             while not self.__thread_stop_event.is_set():
-                image:ImageTk.PhotoImage = self.__tello.get_image_YOLO()re
+                image:ImageTk.PhotoImage = self.__planner.get_info_11111Sensor_image()
 
                 if self.__panel_image is None: 
                     self.__panel_image:tkinter.Label = tkinter.Label(image=image)

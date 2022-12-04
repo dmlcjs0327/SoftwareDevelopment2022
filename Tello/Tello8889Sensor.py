@@ -1,3 +1,4 @@
+#완성
 from Basemodel.Sensor import Sensor
 from Calculation import ValueChecker
 from Calculation import ValueChanger
@@ -55,12 +56,16 @@ class Tello8889Sensor(Sensor):
         """
         info를 Planner에 저장한다
         """
-        if ValueChecker.is_tof_val(info): #ToF 값이면
-            tof_cm = ValueChanger.change_mm_to_cm(int(info))
-            self.__planner.set_info_8889Sensor_tof(tof_cm)
+        if ValueChecker.is_tof_val(info):
+            info = ValueChanger.change_mm_to_cm(int(info))
+            if info > 60:
+                info = 1000
+            self.__planner.set_info_8889Sensor_tof(info)
         
         else: #cmd return 값이면
             self.__planner.set_info_8889Sensor_cmd(info)
+            print("[Tello8889Sensor]",info)
+        
     
     
     

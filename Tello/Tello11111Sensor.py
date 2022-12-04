@@ -1,3 +1,4 @@
+#완성
 from Basemodel.Sensor import Sensor
 from Decoder import H264decoder
 from Decoder.h264_36 import h264decoder
@@ -72,4 +73,3 @@ class Tello11111Sensor(Sensor):
     #클래스명 + 함수명을 출력하는 함수
     def __printf(self,msg:str,fname:str):
         self.__printc("[{}]: {}".format(fname, msg))
-

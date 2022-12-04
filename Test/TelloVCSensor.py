@@ -1,3 +1,4 @@
+#완성
 from Basemodel.Sensor import Sensor
 from CAD import Main
 import threading
@@ -55,7 +56,7 @@ class TelloVCSensor(Sensor):
         """
         info를 Planner에 저장한다
         """
-        self.__planner.set_info_VSSensor(info)
+        self.__planner.insert_cmd_queue(info)
     
     
     

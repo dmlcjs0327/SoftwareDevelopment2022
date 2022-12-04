@@ -1,9 +1,9 @@
+#완성
 import threading
 from Plan.Planner import Planner
 from Tello.Tello8889Sensor import Tello8889Sensor
 from Tello.Tello11111Sensor import Tello11111Sensor
 from Test.TelloVCSensor import TelloVCSensor
-from Test.TelloVGUIActor import TelloVGUIActor
 from Tello.Tello8889Actor import Tello8889Actor
 from Test.TelloVirtualController import TelloVirtualController
 
@@ -38,22 +38,16 @@ class Main:
     def __init__(self):
         self.stop_event = threading.Event()
         
+        self.planner = Planner(self)
+        
         self.tello8889sensor = Tello8889Sensor(self)
         self.tello11111sensor = Tello11111Sensor(self)
         self.telloVCsensor = TelloVCSensor(self)
-        self.telloVGUIactor = TelloVGUIActor(self)
         self.tello8889actor = Tello8889Actor(self)
         
-        self.planner = Planner(self)
         self.virtual_controller = TelloVirtualController(self)
     
     
     
 if __name__ == "__main__":
     Main()
-    
-    
-
-    
-    
-    

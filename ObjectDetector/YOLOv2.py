@@ -1,3 +1,4 @@
+#완성
 from Basemodel.ObjectDetector import ObjectDetector
 from Calculation import ValueChanger
 from Plan.Planner import Planner
@@ -158,5 +159,3 @@ class YOLOv2(ObjectDetector):
         window_right_down_coor = (window_right_down_coor_x, window_right_down_coor_y)
         
         return (window_left_up_coor, window_right_down_coor)
-        
-    
