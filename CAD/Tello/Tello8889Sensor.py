@@ -17,7 +17,7 @@ class Tello8889Sensor(Sensor):
         self.__stop_event = main.stop_event
         self.__main = main
         self.__planner = main.planner
-        self.__socket = main.planner.socket8889
+        self.__socket = main.socket8889
         
         #스레드 실행
         self.__thr_sensor = threading.Thread(target=self.__func_sensor, daemon=True)

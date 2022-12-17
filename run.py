@@ -1,6 +1,7 @@
 #완성
 import threading
 import sys
+import socket
 from time import sleep
 from CAD.Plan.Planner import Planner
 from CAD.Tello.Tello8889Sensor import Tello8889Sensor
@@ -39,8 +40,35 @@ class Main:
     
     def __init__(self):
         print(">>> 프로그램 준비중...")
+        #종료를 위한 stop_event
         self.stop_event = threading.Event()
         
+        #Tello의 주소, 포트
+        self.tello_address = ('192.168.10.1',8889) #텔로에게 접속했을 때, 텔로의 IP주소
+        
+        #연결 정의
+        print("드론 연결 대기중...")
+        self.socket8889 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # IPv4, UDP 통신 소켓 객체를 생성(command용)
+        self.socket8889.bind(('', 8889)) #소켓 객체를 텔로와 바인딩(8889 포트)
+        
+        self.socket8889.sendto("command".encode('utf-8'), self.tello_address)
+        response,addr= self.socket8889.recvfrom(1024)
+        print("8889 port connect: {} ({})".format(response,addr))
+        
+        self.socket8889.sendto("streamon".encode('utf-8'), self.tello_address)
+        response,addr = self.socket8889.recvfrom(1024)
+        print("video stream on: {} ({})".format(response,addr))
+        
+        self.socket8889.sendto("motoron".encode('utf-8'), self.tello_address)
+        response,addr = self.socket8889.recvfrom(1024)
+        print("motor on: {} ({})".format(response,addr))
+        
+        self.socket11111 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # IPv4, UDP 통신 소켓 객체를 생성(camera용)
+        self.socket11111.bind(('', 11111)) #소켓 객체를 텔로와 바인딩(11111 포트)
+        
+        print("드론 연결 완료")
+        
+        #객체 생성
         self.planner = Planner(self)
         
         self.tello8889sensor = Tello8889Sensor(self)

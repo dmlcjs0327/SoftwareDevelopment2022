@@ -136,12 +136,31 @@ class Tello:
         
         #4) 스레드 생성 및 실행
         self.thread_connect = threading.Thread(target=self._thread_connect, daemon=True)
+        
         self.thread_tof = threading.Thread(target=self._thread_tof, daemon=True)
         self.get_GUI_Image_thread = threading.Thread(target = self._getGUIImage, daemon=True)
         self.receive_video_thread = threading.Thread(target=self._receive_video_thread, daemon=True)
         # self.run_yolo_thread = threading.Thread(target=self._run_yolo_thread,daemon=True)
         
-        self.thread_connect.start()
+        # self.thread_connect.start()
+        self.socket_cmd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # IPv4, UDP 통신 소켓 객체를 생성(command용)
+        self.socket_cmd.bind(('', 8889)) #소켓 객체를 텔로와 바인딩(8889 포트)
+
+        self.socket_state = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # IPv4, UDP 통신 소켓 객체를 생성(state용)
+        self.socket_state.bind(('',8890)) #소켓 객체를 텔로와 바인딩(8890 포트)
+        
+        self.socket_camera = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # IPv4, UDP 통신 소켓 객체를 생성(camera용)
+        self.socket_camera.bind(('', 11111)) #소켓 객체를 텔로와 바인딩(11111 포트)
+        
+        self.send_command('command')   #SDK mode에 진입하도록 command 명령어를 전송
+        self.send_command('streamon')  #동영상 스트림을 보내오도록 streamon 명령어를 전송
+        self.send_command('speed 100') #Tello의 속도를 최대로 지정
+        
+        
+        print("[Tello] 소켓 연결 완료")
+        self.thread_tof.start() #tof값을 받아오는 스레드
+        self.receive_video_thread.start() #frame을 저장하는 스레드
+        self.get_GUI_Image_thread.start() #이미지 편집 + 화면 이미지를 갱신하는 스레드
         
         print("[Tello] GUI 시작")
         self.root.mainloop()
@@ -198,27 +217,50 @@ class Tello:
 
     #1) Tello가 보낸 영상 frame을 받아서, self.frame에 저장하는 스레드
     def _receive_video_thread(self):
-        print("[Tello] receive_video_thread 시작")
-        err_cnt = 0 #에러 발생을 카운트하는 변수 (에러가 10번 이상 발생 시 함수 종료)
+        
+        #TEST
         packet_data = bytes()
         
+        #TEST1 START
+        self.__decoder = h264decoder.H264Decoder()
+        packet_data = bytes()
         while not self.stop_event.is_set():
-            try:
-                err_cnt = 0
-                res_string = self.socket_camera.recv(2048)
-                packet_data += res_string
-                
-                if len(res_string) != 1460: # frame의 끝이 아니면,
-                    for frame in self.h264_decode(packet_data): 
-                        self.frame = frame
+            res_string = self.socket_camera.recv(2048)
+            packet_data += res_string
+            
+            if len(res_string) != 1460: # frame의 끝이 아니면,
+                for frame in self.h264_decode(packet_data): 
+                    self.frame = frame
+                packet_data = bytes()
+                    
 
-                    packet_data = bytes()
-
-            except Exception as e:
-                err_cnt += 1
-                print ("[tello] tello_receive_video_thread socket.error 발생: {} (err_cnt: {})".format(e,err_cnt))
+            
+        #TEST
+        
+        
+        #ORIGIN
+        # print("[Tello] receive_video_thread 시작")
+        # err_cnt = 0 #에러 발생을 카운트하는 변수 (에러가 10번 이상 발생 시 함수 종료)
+        # packet_data = bytes()
+        
+        # while not self.stop_event.is_set():
+        #     try:
+        #         err_cnt = 0
+        #         res_string = self.socket_camera.recv(2048)
+        #         packet_data += res_string
                 
-                if err_cnt == 5: break
+        #         if len(res_string) != 1460: # frame의 끝이 아니면,
+        #             for frame in self.h264_decode(packet_data): 
+        #                 self.frame = frame
+
+        #             packet_data = bytes()
+
+        #     except Exception as e:
+        #         err_cnt += 1
+        #         print ("[tello] tello_receive_video_thread socket.error 발생: {} (err_cnt: {})".format(e,err_cnt))
+                
+        #         if err_cnt == 5: break
+        #ORIGIN
 
         print("[tello] tello_run: receive_video_thread 종료")
     
