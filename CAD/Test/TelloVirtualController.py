@@ -5,6 +5,10 @@ import threading
 from PIL import ImageTk
 from time import sleep
 import traceback
+import numpy as np
+from PIL import Image,ImageTk
+
+
 
 class TelloVirtualController:
     """
@@ -41,15 +45,15 @@ class TelloVirtualController:
         self.__lock = threading.Lock()
 
         #화면 기본 설정
-        self.__root = tkinter.Tk()  # GUI 화면 객체 생성
-        self.__root.wm_title("CAD TEST for RMTT") #GUI 화면의 title 설정  
-        self.__root.wm_protocol("WM_DELETE_WINDOW", self.__onClose) #종료버튼을 클릭시 실행할 함수 설정
+        self.root = tkinter.Tk()  # GUI 화면 객체 생성
+        self.root.wm_title("CAD TEST for RMTT") #GUI 화면의 title 설정  
+        self.root.wm_protocol("WM_DELETE_WINDOW", self.__onClose) #종료버튼을 클릭시 실행할 함수 설정
 
         #화면에 띄울 문구 설정
-        self.__text_tof = tkinter.Label(self.__root, text= "ToF: None", font='Helvetica 10 bold') ##re
+        self.__text_tof = tkinter.Label(self.root, text= "ToF: None", font='Helvetica 10 bold') ##re
         self.__text_tof.pack(side='top')
 
-        self.__text_keyboard = tkinter.Label(self.__root, justify="left", text="""
+        self.__text_keyboard = tkinter.Label(self.root, justify="left", text="""
         W - Move Tello Up\t\t\tArrow Up - Move Tello Forward
         S - Move Tello Down\t\t\tArrow Down - Move Tello Backward
         A - Rotate Tello Counter-Clockwise\t\tArrow Left - Move Tello Left
@@ -61,15 +65,15 @@ class TelloVirtualController:
         self.__panel_image = None
 
         #착륙 버튼
-        self.__btn_landing = tkinter.Button(self.__root, text="Land", relief="raised", command=self.__land)
+        self.__btn_landing = tkinter.Button(self.root, text="Land", relief="raised", command=self.__land)
         self.__btn_landing.pack(side="bottom", fill="both", expand="yes", padx=10, pady=5)
 
         #이륙 버튼
-        self.__btn_takeoff = tkinter.Button(self.__root, text="Takeoff", relief="raised", command=self.__takeoff)
+        self.__btn_takeoff = tkinter.Button(self.root, text="Takeoff", relief="raised", command=self.__takeoff)
         self.__btn_takeoff.pack(side="bottom", fill="both", expand="yes", padx=10, pady=5)
 
         #키보드 버튼들과 Tello 동작을 바인딩
-        self.__keyboard_connection = tkinter.Frame(self.__root, width=100, height=2)
+        self.__keyboard_connection = tkinter.Frame(self.root, width=100, height=2)
         self.__keyboard_connection.bind('<KeyPress-w>', self.__on_keypress_w)
         self.__keyboard_connection.bind('<KeyPress-s>', self.__on_keypress_s)
         self.__keyboard_connection.bind('<KeyPress-a>', self.__on_keypress_a)
@@ -87,10 +91,6 @@ class TelloVirtualController:
 
         self.__thread_print_video = threading.Thread(target=self.__func_print_video, daemon=True)
         self.__thread_print_video.start()
-
-        #GUI 메인 루프 시작
-        print(">>> 프로그램 실행")
-        self.__root.mainloop()
     
 
 
@@ -178,12 +178,21 @@ class TelloVirtualController:
         self.__printf("종료",sys._getframe().f_code.co_name)
 
 
+
     #객체인식 화면을 출력하는 함수
     def __func_print_video(self):
         self.__printf("실행",sys._getframe().f_code.co_name)
         try:
             while not self.__thread_stop_event.is_set():
-                image:ImageTk.PhotoImage = self.__planner.get_info_11111Sensor_image()
+                # image:ImageTk.PhotoImage = self.__planner.get_info_11111Sensor_image()
+                
+                #TEST START
+                frame = self.__planner.get_info_11111Sensor_frame()
+                if frame is None or frame.size== 0: 
+                    continue
+                image = Image.fromarray(frame)
+                image = ImageTk.PhotoImage(image)
+                #TEST END
 
                 if self.__panel_image is None: 
                     self.__panel_image:tkinter.Label = tkinter.Label(image=image)
@@ -204,7 +213,7 @@ class TelloVirtualController:
 
     #=====Tello에게 보낼 명령을 controller queue에 저장하는 함수=====
     def __send_cmd(self, msg:str):
-        self.__lock.acquire() #락 획득
+        # self.__lock.acquire() #락 획득
         try:
             data = msg.encode('utf-8')
             self.insert_controller_queue(data)
@@ -213,29 +222,50 @@ class TelloVirtualController:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
             print(traceback.format_exc())
 
-        self.__lock.release() #락 해제
+        # self.__lock.release() #락 해제
+        
+    def __send0_cmd(self, msg:str):
+        # self.__lock.acquire() #락 획득
+        try:
+            data = msg.encode('utf-8')
+            self.insert0_controller_queue(data)
+
+        except Exception as e:
+            self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
+            print(traceback.format_exc())
+
+        # self.__lock.release() #락 해제
 
 
 
     #=====controller_queue에 접근하는 함수=====
     def insert_controller_queue(self,data:str):
-        self.__lock.acquire()
+        # self.__lock.acquire()
         self.__controller_queue.append(data)
-        self.__lock.release()
+        # self.__lock.release()
     
+    def insert0_controller_queue(self,data:str):
+        # self.__lock.acquire()
+        self.__controller_queue.insert(0,data)
+        # self.__lock.release()
     
     def pop_controller_queue(self):
-        self.__lock.acquire()
+        # self.__lock.acquire()
         return_data = None
         if len(self.__controller_queue) > 0: 
             return_data = self.__controller_queue.pop(0)
-        self.__lock.release()
+        # self.__lock.release()
         return return_data
 
 
 
     #=====종료버튼을 클릭시 실행할 함수=====
     def __onClose(self):
+        self.__send0_cmd("land")
+        self.__send0_cmd("motoroff")
+        
+        sleep(1)
+        
         #update_tof, print_video를 종료
         self.__thread_stop_event.set()
         self.__printc("종료중... >> thread stop event 실행")    
@@ -245,13 +275,14 @@ class TelloVirtualController:
         self.__printc("종료중... >> global stop event 실행")
         
         #화면 종료 
-        self.__root.quit() 
+        self.root.quit() 
         self.__printc("종료")
         
         #현 스레드 종료
         exit()
         
-    def virtual_controller_on_close(self):
+        
+    def onClose(self):
         self.__onClose()
 
 

@@ -4,8 +4,10 @@ import tkinter #GUI용 라이브러리
 import time
 import numpy as np #H.264 영상 규격 처리 보조를 위한 수치계산 라이브러리
 import cv2
+import sys
 # import opencv.YOLO as YOLO
-import h264_36.h264decoder as h264decoder
+sys.path.append("D:\\LUC\\jupyter\\2022_software_Development\\SoftwareDevelopment2022\\CAD\\Decoder\\h264_36")
+import h264decoder
 from PIL import Image, ImageTk
 import platform
 # import torch
@@ -58,12 +60,12 @@ class Tello:
         # self.model.classes = [0] # set model to only detect "Person" class
         # self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         
-        self.YOLO_net = cv2.dnn.readNet("yolov2-tiny.weights","yolov2-tiny.cfg")
+        self.YOLO_net = cv2.dnn.readNet("CAD/ObjectDetector/yolov2-tiny.weights", "CAD/ObjectDetector/yolov2-tiny.cfg")
 
         # YOLO NETWORK 재구성
         self.classes = []  #객체 이름을 저장하는 배열
 
-        with open("yolo.names", "r") as f:   # 객체 이름들이 저장된 'yolo.names' open
+        with open("CAD/ObjectDetector/yolo.names", "r") as f:   # 객체 이름들이 저장된 'yolo.names' open
             self.classes = [line.strip() for line in f.readlines()]   # yolo.names 파일
 
         self.layer_names = self.YOLO_net.getLayerNames()
@@ -137,7 +139,7 @@ class Tello:
         self.thread_tof = threading.Thread(target=self._thread_tof, daemon=True)
         self.get_GUI_Image_thread = threading.Thread(target = self._getGUIImage, daemon=True)
         self.receive_video_thread = threading.Thread(target=self._receive_video_thread, daemon=True)
-        self.run_yolo_thread = threading.Thread(target=self._run_yolo_thread,daemon=True)
+        # self.run_yolo_thread = threading.Thread(target=self._run_yolo_thread,daemon=True)
         
         self.thread_connect.start()
         

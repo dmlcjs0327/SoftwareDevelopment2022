@@ -42,18 +42,20 @@ class Main:
         self.stop_event = threading.Event()
         
         self.planner = Planner(self)
-        sleep(0.2)
         
         self.tello8889sensor = Tello8889Sensor(self)
         self.tello11111sensor = Tello11111Sensor(self)
-        
         self.tello8889actor = Tello8889Actor(self)
+        self.telloVCsensor = TelloVCSensor(self)
         
         self.virtual_controller = TelloVirtualController(self)
-        self.telloVCsensor = TelloVCSensor(self)
-    
-    
-    
+        
+        #GUI 메인 루프 시작
+        print(">>> 프로그램 실행")
+        self.virtual_controller.root.mainloop()
+        
+
+
 if __name__ == "__main__":
     version = sys.version.split(".")
     if version[0] == "3" and version[1] == "6":
@@ -61,3 +63,4 @@ if __name__ == "__main__":
     else:
         print(">>>파이썬 3.6만 지원됩니다.")
         print(">>>현재 버젼: {}".format(sys.version))
+    print(">>> 프로그램 종료")

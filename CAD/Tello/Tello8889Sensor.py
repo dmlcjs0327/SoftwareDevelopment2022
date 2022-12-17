@@ -5,6 +5,7 @@ from CAD.Calculation import ValueChanger
 import threading
 import sys
 import traceback
+from time import sleep
 
 
 
@@ -14,7 +15,7 @@ class Tello8889Sensor(Sensor):
     def __init__(self, main):
         self.__printc("생성")
         self.__stop_event = main.stop_event
-        self.__virtual_controller = main.virtual_controller
+        self.__main = main
         self.__planner = main.planner
         self.__socket = main.planner.socket8889
         
@@ -28,16 +29,30 @@ class Tello8889Sensor(Sensor):
     def __func_sensor(self):
         self.__printf("실행",sys._getframe().f_code.co_name)
         try:
+            while not self.__stop_event.is_set() and not hasattr(self.__main, 'virtual_controller'):
+                self.__printf("대기중",sys._getframe().f_code.co_name)
+                sleep(1)
+            
+            self.__virtual_controller = self.__main.virtual_controller
+            
             while not self.__stop_event.is_set():
                 data = self.take_data_from_sensor()
                 info = self.change_data_to_info(data)
                 self.save_to_planner(info)
-
+                    
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
             print(traceback.format_exc())
         
         self.__printf("종료",sys._getframe().f_code.co_name)
+        
+        #virtual controller 종료
+        try:
+            self.__virtual_controller.onClose()
+        except Exception as e:
+            self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
+            print(traceback.format_exc())
+            
     
     
     def take_data_from_sensor(self): 
@@ -60,9 +75,6 @@ class Tello8889Sensor(Sensor):
         """
         info를 Planner에 저장한다
         """
-        # print("[TEST] type:{}".format(type(info)))
-        # print("[TEST] checker: {}",ValueChecker.is_tof_val(info))
-        # print("[TEST] checker type: {}",type(ValueChecker.is_tof_val(info)))
         
         if ValueChecker.is_tof_val(info):
             #ToF 값은 "tof 100" 형태로 들어온다

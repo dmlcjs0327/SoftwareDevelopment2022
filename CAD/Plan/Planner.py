@@ -6,6 +6,7 @@ import traceback
 from time import sleep
 from CAD.Calculation import ValueChanger
 from CAD.ObjectDetector.YOLOv2 import YOLOv2
+from numpy import *
 
 
 
@@ -30,6 +31,9 @@ class Planner:
         #종료를 위한 stop_event
         self.__stop_event = main.stop_event
         
+        #종료를 위한 virtual controller 접근
+        self.__main = main
+                
         #회피를 수행할 거리(cm)
         self.threshold_distance = 50
         
@@ -71,6 +75,10 @@ class Planner:
         response,addr = self.socket8889.recvfrom(1024)
         self.__printc("video stream on: {} ({})".format(response,addr))
         
+        self.socket8889.sendto("motoron".encode('utf-8'), self.tello_address)
+        response,addr = self.socket8889.recvfrom(1024)
+        self.__printc("motoron: {} ({})".format(response,addr))
+        
         self.socket11111 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # IPv4, UDP 통신 소켓 객체를 생성(camera용)
         self.socket11111.bind(('', 11111)) #소켓 객체를 텔로와 바인딩(11111 포트)
         
@@ -96,8 +104,13 @@ class Planner:
     def __func_planner(self):
         self.__printf("실행",sys._getframe().f_code.co_name)
         try:
+            while not self.__stop_event.is_set() and not hasattr(self.__main, 'virtual_controller'):
+                self.__printf("대기중",sys._getframe().f_code.co_name)
+                sleep(1)
+                
+            self.__virtual_controller = self.__main.virtual_controller
+                
             while not self.__stop_event.is_set():
-
                 #1) frame 정보가 존재하면, frame에 대해 장애물 윈도우를 그리기
                 self.__redraw_frame()
                 
@@ -108,26 +121,41 @@ class Planner:
                 if object_coor and tof and tof < self.threshold_distance:
                     
                     #각 값들을 초기화
-                    self.set_info_11111Sensor_coor = None
-                    self.set_info_8889Sensor_tof = None
+                    self.set_info_11111Sensor_coor(None)
+                    self.set_info_8889Sensor_tof(None)
                     frame = self.get_info_11111Sensor_frame()
                     
-                    height, width, c = frame.shape()
-                    
-                    #크기를 바탕으로 장애물에 대한 실제 3차원 좌표 생성
-                    real_coor = self.__create_real_coor(height, width)
-                    
-                    #3) 3차원 좌표를 바탕으로 회피 명령 생성
-                    avd_cmd = self.__create_avd_cmd(real_coor)
-                    
-                    #4) 생성한 명령을 queue에 저장
-                    self.insert_cmd_queue(avd_cmd)
+                    if hasattr(frame, "shape"):
+                        height, width, c = frame.shape
+                        
+                        #크기를 바탕으로 장애물에 대한 실제 3차원 좌표 생성
+                        real_coor = self.__create_real_coor(height, width)
+                        
+                        #3) 3차원 좌표를 바탕으로 회피 명령 생성
+                        avd_cmd = self.__create_avd_cmd(real_coor)
+                        
+                        #4) 생성한 명령을 queue에 저장
+                        self.insert_cmd_queue(avd_cmd)
+                    else:
+                        print("<<<frame이 이상합니다.")
+                        print("<<<test_frame:",frame,type(frame))
 
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
             print(traceback.format_exc())
         
         self.__printf("종료",sys._getframe().f_code.co_name)
+        
+        self.socket8889.sendto("motoroff".encode('utf-8'), self.tello_address)
+        response,addr = self.socket8889.recvfrom(1024)
+        self.__printc("motoroff: {} ({})".format(response,addr))
+        
+        #VirtualController 종료
+        try:
+            self.__virtual_controller.onClose()
+        except Exception as e:
+            self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
+            print(traceback.format_exc())
     
     
     #Tello에게 15초 간격으로 command를 전송하는 함수
@@ -147,9 +175,20 @@ class Planner:
             print(traceback.format_exc())
         
         self.__printf("종료",sys._getframe().f_code.co_name)
+        
+        self.socket8889.sendto("motoroff".encode('utf-8'), self.tello_address)
+        response,addr = self.socket8889.recvfrom(1024)
+        self.__printc("motoroff: {} ({})".format(response,addr))
+        
+        #virtual controller 종료
+        try:
+            self.__virtual_controller.onClose()
+        except Exception as e:
+            self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
+            print(traceback.format_exc())
 
 
-    #Tello에게 15초 간격으로 command를 전송하는 함수
+    #Tello에게 0.1초 간격으로 EXT tof?를 전송하는 함수
     def __func_request_tof(self):
         self.__printf("실행",sys._getframe().f_code.co_name)
         """
@@ -165,6 +204,17 @@ class Planner:
             print(traceback.format_exc())
         
         self.__printf("종료",sys._getframe().f_code.co_name)
+        
+        self.socket8889.sendto("motoroff".encode('utf-8'), self.tello_address)
+        response,addr = self.socket8889.recvfrom(1024)
+        self.__printc("motoroff: {} ({})".format(response,addr))
+        
+        #virtual controller 종료
+        try:
+            self.__virtual_controller.onClose()
+        except Exception as e:
+            self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
+            print(traceback.format_exc())
 
     
     def __redraw_frame(self):

@@ -15,6 +15,7 @@ class Tello8889Actor(Actor):
     def __init__(self, main):
         self.__printc("생성")
         self.__stop_event = main.stop_event
+        self.__main = main
         self.__tello_address = main.planner.tello_address
         self.__planner = main.planner
         self.__socket = main.planner.socket8889
@@ -29,6 +30,12 @@ class Tello8889Actor(Actor):
     def __func_actor(self):
         self.__printf("실행",sys._getframe().f_code.co_name)
         try:
+            while not self.__stop_event.is_set() and not hasattr(self.__main, 'virtual_controller'):
+                self.__printf("대기중",sys._getframe().f_code.co_name)
+                sleep(1)
+            
+            self.__virtual_controller = self.__main.virtual_controller
+            
             while not self.__stop_event.is_set():
                 cmd = self.take_cmd_from_planner()
                 safe_cmd = self.change_cmd_is_safe(cmd)
@@ -41,6 +48,13 @@ class Tello8889Actor(Actor):
             print(traceback.format_exc())
         
         self.__printf("종료",sys._getframe().f_code.co_name)
+        
+        #virtual controller 종료
+        try:
+            self.__virtual_controller.onClose()
+        except Exception as e:
+            self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
+            print(traceback.format_exc())
 
 
     def take_cmd_from_planner(self): 
