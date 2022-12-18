@@ -4,7 +4,6 @@ from CAD.Calculation import ValueChanger
 import numpy as np
 from PIL import Image,ImageTk
 import cv2
-import os
 
 
 

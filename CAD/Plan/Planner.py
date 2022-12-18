@@ -161,7 +161,7 @@ class Planner:
             print(traceback.format_exc())
 
 
-    #Tello에게 0.1초 간격으로 EXT tof?를 전송하는 함수
+    #Tello에게 0.05초 간격으로 EXT tof?를 전송하는 함수
     def __func_request_tof(self):
         self.__printf("실행",sys._getframe().f_code.co_name)
         """
@@ -170,7 +170,7 @@ class Planner:
         try:
             while not self.__stop_event.is_set():
                 self.insert_cmd_queue('EXT tof?')
-                sleep(0.1)
+                sleep(0.05)
 
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
