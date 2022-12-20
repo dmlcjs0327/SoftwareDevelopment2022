@@ -194,15 +194,17 @@ class TelloVirtualController:
         self.__printf("실행",sys._getframe().f_code.co_name)
         try:
             while not self.__thread_stop_event.is_set():
-                # image:ImageTk.PhotoImage = self.__planner.get_info_11111Sensor_image()
+                # ORIGIN START
+                image:ImageTk.PhotoImage = self.__planner.get_info_11111Sensor_image()
+                # ORIGIN END
                 
-                #TEST START
-                frame = self.__planner.get_info_11111Sensor_frame()
-                if frame is None or frame.size== 0: 
-                    continue
-                image = Image.fromarray(frame)
-                image = ImageTk.PhotoImage(image)
-                #TEST END
+                # #TEST START
+                # frame = self.__planner.get_info_11111Sensor_frame()
+                # if frame is None or frame.size== 0: 
+                #     continue
+                # image = Image.fromarray(frame)
+                # image = ImageTk.PhotoImage(image)
+                # #TEST END
 
                 if self.__panel_image is None: 
                     self.__panel_image:tkinter.Label = tkinter.Label(image=image)

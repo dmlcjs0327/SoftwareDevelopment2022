@@ -145,8 +145,7 @@ def change_cmd_for_tello(cmd:str):
         return cmd.encode("utf-8")
 
 
-def change_windows_to_window(window_coor_list:list, ir_left_up_coor: tuple, ir_right_down_coor:tuple, \
-                             screen_height:int, screen_width:int):
+def change_windows_to_window(window_coor_list:list, ir_left_up_coor: tuple, ir_right_down_coor:tuple):
     """
     입력값 - window_coor_list: 윈도우의 (좌상단좌표, 우하단좌표)들이 들어있는 리스트
     입력값 - ir_left_up_coor: 적외선 윈도우의 좌상단좌표
@@ -230,36 +229,7 @@ def change_windows_to_window(window_coor_list:list, ir_left_up_coor: tuple, ir_r
             
             fusion_window = (fusion_window_left_up_coor, fusion_window_right_down_coor)
     
-    #fusion_window가 존재하면, 범위를 벗어나는 픽셀좌표에 대해 131072로 설정
-    if fusion_window is not None:
-        #fusion window decapsulation
-        fusion_window_left_up_coor = fusion_window[0]
-        fusion_window_right_down_coor = fusion_window[1]
-
-        fusion_window_left_x = fusion_window_left_up_coor[0]
-        fusion_window_right_x = fusion_window_right_down_coor[0]
-        fusion_window_up_y = fusion_window_left_up_coor[1]
-        fusion_window_down_y = fusion_window_right_down_coor[1]
-        
-        if fusion_window_left_x <=0:
-            fusion_window_left_x = -131072
-        
-        if fusion_window_right_x >= screen_width:
-            fusion_window_right_x = 131072
-            
-        if fusion_window_up_y <=0:
-            fusion_window_up_y = -131072
-            
-        if fusion_window_down_y >= screen_height:
-            fusion_window_down_y = 131072
-        
-        #fusion window encapsulation
-        fusion_window_left_up_coor = (fusion_window_left_x, fusion_window_up_y)
-        fusion_window_right_down_coor = (fusion_window_right_x, fusion_window_down_y)
-        
-        fusion_window = (fusion_window_left_up_coor, fusion_window_right_down_coor)
-    
-    
+   
     #fusion_window가 None 이다 
     # = IR영역이 감지범위 내임에도 감지를 못했다
     # = 객체인식은 못했으나 무언가 장애물이 존재한다

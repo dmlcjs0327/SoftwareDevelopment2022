@@ -4,7 +4,7 @@ import sys
 import traceback
 from time import sleep
 from CAD.Calculation import ValueChanger
-from CAD.ObjectDetector.YOLOv2 import YOLOv2
+from CAD.ObjectDetector.YOLOv5 import YOLOv5
 from numpy import *
 
 
@@ -27,6 +27,10 @@ class Planner:
         #종료를 위한 stop_event
         self.__stop_event = main.stop_event
         
+        #8889 소켓 & Tello address
+        self.socket8889 = main.socket8889
+        self.tello_address = main.tello_address
+        
         #종료를 위한 virtual controller 접근
         self.__main = main
                 
@@ -47,8 +51,8 @@ class Planner:
         self.__info_11111Sensor_image = None
         self.__info_11111Sensor_coor = None
         
-        #객체감지를 위한 YOLOv2 객체
-        self.__YOLOv2 = YOLOv2(self)
+        #객체감지를 위한 YOLOv5 객체
+        self.__YOLOv5 = YOLOv5(self)
         
         #lock 생성
         self.__lock_cmd_queue = threading.Lock()
@@ -85,34 +89,20 @@ class Planner:
                 
             while not self.__stop_event.is_set():
                 #1) frame 정보가 존재하면, frame에 대해 장애물 윈도우를 그리기
-                self.__redraw_frame()
-                
-                tof = self.get_info_8889Sensor_tof()
-                object_coor =  self.get_info_11111Sensor_coor()
+                frame, tof, object_coor =  self.__redraw_frame() #좌표받아오기
                 
                 #2) 장애물이 인지된 상태이고, 안정범위를 침범한 경우
-                if object_coor and tof and tof < self.threshold_distance:
+                if object_coor:
+                    #장애물의 실제 좌표를 계산
+                    screen_size = (frame.shape[1], frame.shape[0])
+                    real_coor = self.__create_real_coor(object_coor, tof, screen_size)                        
                     
-                    #각 값들을 초기화
-                    self.set_info_11111Sensor_coor(None)
-                    self.set_info_8889Sensor_tof(None)
-                    frame = self.get_info_11111Sensor_frame()
+                    #3) 3차원 좌표를 바탕으로 회피 명령 생성
+                    avd_cmd = self.__create_avd_cmd(real_coor)
                     
-                    if hasattr(frame, "shape"):
-                        height, width, c = frame.shape
-                        
-                        #크기를 바탕으로 장애물에 대한 실제 3차원 좌표 생성
-                        real_coor = self.__create_real_coor(height, width)
-                        
-                        #3) 3차원 좌표를 바탕으로 회피 명령 생성
-                        avd_cmd = self.__create_avd_cmd(real_coor)
-                        
-                        #4) 생성한 명령을 queue에 저장
-                        self.insert_cmd_queue(avd_cmd)
-                    else:
-                        print("<<<frame이 이상합니다.")
-                        print("<<<test_frame:",frame,type(frame))
-                sleep(0.1)
+                    #4) 생성한 명령을 queue에 저장
+                    self.insert_cmd_queue(avd_cmd)
+
 
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
@@ -193,21 +183,22 @@ class Planner:
     
     def __redraw_frame(self):
         frame = self.get_info_11111Sensor_frame()
-        if frame is not None and frame.size != 0: 
-            
+        tof = self.get_info_8889Sensor_tof()
+        
+        if frame is not None and frame.size != 0:     
             #YOLO에 frame을 전달하여, 객체인식이 적용된 이미지를 전달받음
-            image, object_coor = self.__YOLOv2.detect_from_frame(frame)
+            image, object_coor = self.__YOLOv5.detect_from_frame(frame, tof)
             
             #전달받은 값들을 저장
             self.set_info_11111Sensor_image(image)
             self.set_info_11111Sensor_coor(object_coor)
-    
-    
-    def __create_real_coor(self, height, width):
-        tof = self.get_info_8889Sensor_tof()
-        coor = self.get_info_11111Sensor_coor()
+            return frame, tof, object_coor
         
-        object_val = (tof, coor, (height, width)) 
+        return None, None, None
+    
+    
+    def __create_real_coor(self, object_coor, tof, screen_size):
+        object_val = (tof, object_coor, screen_size) 
         object_coor = ValueChanger.change_val_to_coor(object_val)
         return object_coor
 

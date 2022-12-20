@@ -42,7 +42,7 @@ class Tello8889Actor(Actor):
                 safe_cmd = self.change_cmd_is_safe(cmd)
                 drone_cmd = self.change_cmd_for_drone(safe_cmd)
                 self.send_to_actuator(drone_cmd)
-                sleep(0.01)
+                sleep(0.1)
 
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
