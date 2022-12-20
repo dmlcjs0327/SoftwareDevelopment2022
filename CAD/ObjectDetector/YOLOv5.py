@@ -84,7 +84,7 @@ class YOLOv5(ObjectDetector):
         #image를 imagetk 형식으로 변환
         image = ImageTk.PhotoImage(image)
         
-        if fusion_window_coor is None and tof < 50:
+        if fusion_window_coor is None and tof and tof < 50:
             #안전거리 내이면, 스크린 크기의 장애물로 지정
             fusion_window_coor = ((0,0), (x_shape,y_shape))
         

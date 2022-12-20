@@ -43,7 +43,7 @@ class Main:
         
         #Tello의 주소, 포트
         self.tello_address = ('192.168.10.1',8889) #텔로에게 접속했을 때, 텔로의 IP주소
-        # self.tello_address = ('192.168.137.32',8889) #텔로에게 접속했을 때, 텔로의 IP주소
+        # self.tello_address = ('192.168.137.198',8889) #텔로에게 접속했을 때, 텔로의 IP주소
         
         #비행상태 확인을 위한 변수
         self.is_takeoff = False
@@ -54,16 +54,16 @@ class Main:
         self.socket8889.bind(('', 8889)) #소켓 객체를 텔로와 바인딩(8889 포트)
         
         self.socket8889.sendto("command".encode('utf-8'), self.tello_address)
-        response,addr= self.socket8889.recvfrom(1024)
-        print("8889 port connect: {} ({})".format(response,addr))
+        # response,addr= self.socket8889.recvfrom(1024)
+        # print("8889 port connect: {} ({})".format(response,addr))
         
         self.socket8889.sendto("streamon".encode('utf-8'), self.tello_address)
-        response,addr = self.socket8889.recvfrom(1024)
-        print("video stream on: {} ({})".format(response,addr))
+        # response,addr = self.socket8889.recvfrom(1024)
+        # print("video stream on: {} ({})".format(response,addr))
         
         self.socket8889.sendto("motoron".encode('utf-8'), self.tello_address)
-        response,addr = self.socket8889.recvfrom(1024)
-        print("motor on: {} ({})".format(response,addr))
+        # response,addr = self.socket8889.recvfrom(1024)
+        # print("motor on: {} ({})".format(response,addr))
         
         self.socket11111 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # IPv4, UDP 통신 소켓 객체를 생성(camera용)
         self.socket11111.bind(('', 11111)) #소켓 객체를 텔로와 바인딩(11111 포트)
