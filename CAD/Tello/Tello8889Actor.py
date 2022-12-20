@@ -89,10 +89,21 @@ class Tello8889Actor(Actor):
         cmd를 Actuator에게 전송한다
         """
         if cmd is not None:
-            #TEST
-            if cmd.decode() != "EXT tof?":
-                self.__printf("send: {}".format(cmd),sys._getframe().f_code.co_name)
+            # #TEST
+            # if cmd.decode() != "EXT tof?":
+            #     self.__printf("send: {}".format(cmd),sys._getframe().f_code.co_name)
+            # #TEST
             self.__socket.sendto(cmd, self.__tello_address)
+            
+            decode_cmd = cmd.decode()
+            if decode_cmd in ["takeoff", "land"]:
+                self.__main.is_takeoff = True if decode_cmd == "takeoff" else False
+                cnt = 0
+                while self.__planner.get_info_8889Sensor_cmd() is None or cnt <= 5:
+                    self.__planner.__cmd_queue = []
+                    sleep(1)
+                    cnt += 1
+                self.__planner.set_info_8889Sensor_cmd(None)
     
     
     

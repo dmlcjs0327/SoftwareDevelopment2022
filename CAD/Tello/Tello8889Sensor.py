@@ -86,9 +86,8 @@ class Tello8889Sensor(Sensor):
         else: #cmd return 값이면
             self.__planner.set_info_8889Sensor_cmd(info)
             print("[Tello8889Sensor]",info)
-            
-        
-    
+
+
     
     
     #=====실행내역 출력을 위한 함수=====

@@ -52,11 +52,11 @@ class YOLOv5(ObjectDetector):
                 window_coor_list.append(((x1,y1), (x2,y2)))
                 
                 #frame에 그리기
-                BGR = (0, 255, 0) #(초록색)
-                cv2.rectangle(frame, (x1, y1), (x2, y2), BGR, 2)
+                RGB = (0, 255, 0) #(초록색)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), RGB, 2)
                 name = self.__classes[int(object_label_list[i])]
                 text = "{}: ({},{}), ({},{})".format(name, x1,y1,x2,y2)
-                cv2.putText(frame, text, (x1, y1-20), cv2.FONT_HERSHEY_SIMPLEX, 0.9, BGR, 2)
+                cv2.putText(frame, text, (x1, y1-20), cv2.FONT_HERSHEY_SIMPLEX, 0.9, RGB, 2)
         
         #IR 윈도우의 좌상단좌표(x,y), IR 윈도우의 우하단좌표(x,y)
         ir_window_left_up_coor, ir_window_right_down_coor = self.__calculate_ir_window_coor(tof,y_shape,x_shape)
@@ -67,16 +67,16 @@ class YOLOv5(ObjectDetector):
         #IR 윈도우가 존재하는 경우, 
         if ir_window_left_up_coor and ir_window_right_down_coor:
             #IR 윈도우를 frame에 반영
-            BGR = (0, 0, 255) #(빨간색)
-            cv2.rectangle(frame, ir_window_left_up_coor, ir_window_right_down_coor, BGR, 5)
+            RGB = (255, 0, 0) #(빨간색)
+            cv2.rectangle(frame, ir_window_left_up_coor, ir_window_right_down_coor, RGB, 5)
             cv2.putText(frame, "IR AREA", (ir_window_left_up_coor[0], ir_window_left_up_coor[1] - 20), cv2.FONT_ITALIC, 0.5, (255, 255, 255), 1)
     
             #IR 윈도우에 겹치는 윈도우들을 모아 하나의 윈도우로 변환
             fusion_window_coor = ValueChanger.change_windows_to_window(window_coor_list, ir_window_left_up_coor, ir_window_right_down_coor)
             
             #겹치는 윈도우를 frame에 반영
-            BGR = (255, 0, 0) #(파란색)
-            cv2.rectangle(frame, fusion_window_coor[0], fusion_window_coor[1], BGR, 5)
+            RGB = (0, 0, 255) #(파란색)
+            cv2.rectangle(frame, fusion_window_coor[0], fusion_window_coor[1], RGB, 5)
         
         #frame을 image로 변환
         image = Image.fromarray(frame)
@@ -108,8 +108,8 @@ class YOLOv5(ObjectDetector):
         
         #영상에서 IR 윈도우의 세로 픽셀 계산
         height_length_fov = 0.758 * x
-        height_length_tof_start = 0.203 * x - 5.528
-        height_length_tof_end = 0.555 * x - 4.472
+        height_length_tof_start = 0.203 * x - 4.472
+        height_length_tof_end = 0.555 * x - 5.528
         
         height_proportion_start = height_length_tof_start / height_length_fov
         height_proportion_end = height_length_tof_end / height_length_fov
@@ -126,8 +126,8 @@ class YOLOv5(ObjectDetector):
         
         #영상에서 IR 윈도우의 가로 픽셀 계산
         width_length_fov = 1.048 * x
-        width_length_tof_start = 0.348 * x - 0.528
-        width_length_tof_end = 0.7 * x + 0.528
+        width_length_tof_start = 0.348 * x + 0.528
+        width_length_tof_end = 0.7 * x - 0.528
         
         width_proportion_start = width_length_tof_start / width_length_fov
         width_proportion_end = width_length_tof_end / width_length_fov

@@ -92,7 +92,7 @@ class Planner:
                 frame, tof, object_coor =  self.__redraw_frame() #좌표받아오기
                 
                 #2) 장애물이 인지된 상태이고, 안정범위를 침범한 경우
-                if object_coor:
+                if self.__main.is_takeoff and object_coor:
                     #장애물의 실제 좌표를 계산
                     screen_size = (frame.shape[1], frame.shape[0])
                     real_coor = self.__create_real_coor(object_coor, tof, screen_size)                        
@@ -110,10 +110,6 @@ class Planner:
         
         self.__printf("종료",sys._getframe().f_code.co_name)
         
-        self.socket8889.sendto("motoroff".encode('utf-8'), self.tello_address)
-        response,addr = self.socket8889.recvfrom(1024)
-        self.__printc("motoroff: {} ({})".format(response,addr))
-        
         #VirtualController 종료
         try:
             self.__virtual_controller.onClose()
@@ -129,20 +125,22 @@ class Planner:
         Tello는 15초 이상 전달받은 명령이 없을시 자동 착륙하기 때문에,
         이를 방지하기 위해 5초 간격으로 Tello에게 "command" 명령을 전송
         """
+        cnt = 0
         try:
             while not self.__stop_event.is_set():
-                self.insert_cmd_queue("command")
-                sleep(5)
+                self.insert_cmd_queue("stop")
+                cnt += 1
+                sleep(1)
+                
+                if cnt == 5:
+                    self.insert_cmd_queue("command")    
+                    cnt = 0
 
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
             print(traceback.format_exc())
         
         self.__printf("종료",sys._getframe().f_code.co_name)
-        
-        self.socket8889.sendto("motoroff".encode('utf-8'), self.tello_address)
-        response,addr = self.socket8889.recvfrom(1024)
-        self.__printc("motoroff: {} ({})".format(response,addr))
         
         #virtual controller 종료
         try:
@@ -156,22 +154,18 @@ class Planner:
     def __func_request_tof(self):
         self.__printf("실행",sys._getframe().f_code.co_name)
         """
-        Tello에게 0.1초 주기로 tof값 전송을 요청하는 스레드
+        Tello에게 0.2초 주기로 tof값 전송을 요청하는 스레드
         """
         try:
             while not self.__stop_event.is_set():
                 self.insert_cmd_queue('EXT tof?')
-                sleep(0.1)
+                sleep(0.2)
 
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
             print(traceback.format_exc())
         
         self.__printf("종료",sys._getframe().f_code.co_name)
-        
-        self.socket8889.sendto("motoroff".encode('utf-8'), self.tello_address)
-        response,addr = self.socket8889.recvfrom(1024)
-        self.__printc("motoroff: {} ({})".format(response,addr))
         
         #virtual controller 종료
         try:

@@ -28,6 +28,8 @@ class TelloVirtualController:
         self.__printc("생성")
         
         #Planner
+        self.__socket8889 = main.socket8889
+        self.__tello_address = main.tello_address
         self.__planner = main.planner
 
         #종료를 위한 stop_event
@@ -234,7 +236,6 @@ class TelloVirtualController:
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
             print(traceback.format_exc())
-
         # self.__lock.release() #락 해제
         
     def __send0_cmd(self, msg:str):
@@ -274,10 +275,10 @@ class TelloVirtualController:
 
     #=====종료버튼을 클릭시 실행할 함수=====
     def __onClose(self):
-        self.__send0_cmd("land")
-        self.__send0_cmd("motoroff")
-        
-        sleep(1)
+        self.__socket8889.sendto("land".encode('utf-8'), self.__tello_address)
+        sleep(0.2)
+        self.__socket8889.sendto("motoroff".encode('utf-8'), self.__tello_address)
+        sleep(0.2)
         
         #update_tof, print_video를 종료
         self.__thread_stop_event.set()

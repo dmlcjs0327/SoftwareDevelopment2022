@@ -105,11 +105,11 @@ def change_cmd_for_tello(cmd:str):
     if cmd is None:
         return None
     
-    cmd_list = cmd.split()
+    cmd_list = cmd.split(" ")
     
-    if cmd_list[0] in ["forward", "back", "right", "left", "cw", "ccw", "up", "down"]:
-        direction = cmd_list[0]
-        weight = int(float(cmd_list[1]))
+    if cmd_list[0] in ["forward", "back", "right", "left", "cw", "ccw", "up", "down", "stop"]:
+
+        weight = int(float(cmd_list[1])) if cmd_list[0] != "stop" else 0
         if weight > 100: 
             weight = 100
         
@@ -122,22 +122,25 @@ def change_cmd_for_tello(cmd:str):
             rc_cmd = "rc 0 {} 0 0".format(-1*weight)
         
         elif cmd_list[0] == "left":
-            rc_cmd = "rc {} 0 0 0".format(weight)
+            rc_cmd = "rc {} 0 0 0".format(-1*weight)
         
         elif cmd_list[0] == "right":
-            rc_cmd = "rc {} 0 0 0".format(-1*weight)
+            rc_cmd = "rc {} 0 0 0".format(weight)
         
         elif cmd_list[0] == "up":
             rc_cmd = "rc 0 0 {} 0".format(weight)
         
         elif cmd_list[0] == "down":
             rc_cmd = "rc 0 0 {} 0".format(-1*weight)
+
+        elif cmd_list[0] == "cw":
+            rc_cmd = "rc 0 0 0 {}".format(weight)
             
         elif cmd_list[0] == "ccw":
-            rc_cmd = "rc 0 0 0 {}".format(weight)
-        
-        elif cmd_list[0] == "cw":
             rc_cmd = "rc 0 0 0 {}".format(-1*weight)
+        
+        elif cmd_list[0] =='stop':
+            rc_cmd = "rc 0 0 0 0"
         
         return rc_cmd.encode('utf-8')
     
@@ -228,8 +231,8 @@ def change_windows_to_window(window_coor_list:list, ir_left_up_coor: tuple, ir_r
             fusion_window_right_down_coor = (fusion_window_right_x, fusion_window_down_y)
             
             fusion_window = (fusion_window_left_up_coor, fusion_window_right_down_coor)
-    
-   
+
+
     #fusion_window가 None 이다 
     # = IR영역이 감지범위 내임에도 감지를 못했다
     # = 객체인식은 못했으나 무언가 장애물이 존재한다
@@ -253,7 +256,7 @@ def change_to_safe_cmd(cmd:str, tof:int, threshold:int):
     if cmd is None:
         return None
 
-    cmd_list = cmd.split()
+    cmd_list = cmd.split(" ")
     
     #어차피 전방에 대해서만 장애물 감지가 가능하기 때문에, 전방이동만 고려하면 됨
     if cmd_list[0] !="forward":
