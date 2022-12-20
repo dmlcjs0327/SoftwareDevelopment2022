@@ -16,7 +16,7 @@ class Tello8889Actor(Actor):
     
     def __init__(self, main):
         self.__printc("생성")
-        self.INTERVAL = 0.4
+        self.__threshold_distance = 50 #회피를 수행할 거리(cm)
         self.__pre_cmd = None
         self.__stop_event = main.stop_event
         self.__main = main
@@ -39,16 +39,23 @@ class Tello8889Actor(Actor):
                 sleep(1)
             
             self.__virtual_controller = self.__main.virtual_controller
-            
+            pre_cnt = 0
             while not self.__stop_event.is_set():
+                sleep(0.3)
                 cmd = self.take_cmd_from_planner()
-                if cmd is None or cmd == self.__pre_cmd:
-                    continue
+                if cmd == self.__pre_cmd:
+                    pre_cnt += 1
+                
                 self.__pre_cmd = cmd
+                
+                if cmd is None or pre_cnt>1:
+                    pre_cnt = 0
+                    cmd = "stop"
+                    continue
+                
                 safe_cmd = self.change_cmd_is_safe(cmd)
                 drone_cmd = self.change_cmd_for_drone(safe_cmd)
                 self.send_to_actuator(drone_cmd)
-                sleep(1)
             
         
         except Exception as e:
@@ -78,8 +85,7 @@ class Tello8889Actor(Actor):
         cmd가 충돌이 발생하지 않는 명령으로 변환한다
         """
         tof = self.__planner.get_info_8889Sensor_tof()
-        threshold = self.__planner.threshold_distance
-        safe_cmd = ValueChanger.change_to_safe_cmd(cmd, tof, threshold)
+        safe_cmd = ValueChanger.change_to_safe_cmd(cmd, tof, self.__threshold_distance)
         return safe_cmd
     
     

@@ -84,12 +84,16 @@ class YOLOv5(ObjectDetector):
         #image를 imagetk 형식으로 변환
         image = ImageTk.PhotoImage(image)
         
+        if fusion_window_coor is None and tof < 50:
+            #안전거리 내이면, 스크린 크기의 장애물로 지정
+            fusion_window_coor = ((0,0), (x_shape,y_shape))
+        
         return (image, fusion_window_coor)
     
     
     def __calculate_ir_window_coor(self, tof, height, width):
         #ToF의 측정가능 거리는 약 60cm
-        if tof is None or tof > 60:
+        if tof is None or tof > 60 or tof <= 3:
             return None, None
         
         x = tof - 3

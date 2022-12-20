@@ -244,9 +244,9 @@ class TelloVirtualController:
     #=====종료버튼을 클릭시 실행할 함수=====
     def __onClose(self):
         self.__socket8889.sendto("land".encode('utf-8'), self.__tello_address)
-        sleep(0.2)
+        sleep(0.5)
         self.__socket8889.sendto("motoroff".encode('utf-8'), self.__tello_address)
-        sleep(0.2)
+        sleep(0.5)
         
         #update_tof, print_video를 종료
         self.__thread_stop_event.set()

@@ -32,20 +32,21 @@ class Planner:
         self.socket8889 = main.socket8889
         self.tello_address = main.tello_address
         
+        
+        self.threshold_distance = 60
+        
         #종료를 위한 virtual controller 접근
-        self.__main = main
-                
-        #회피를 수행할 거리(cm)
-        self.threshold_distance = 50
+        self.__main = main  
         
         #기본적으로 움직일 크기(cm)
-        self.base_move_distance = 20
+        self.base_move_distance = 60
         
         #장애물 안전거리 보정치(cm) / Tello 지름의 절반보다 조금 큼
         self.safe_constant = 20
         
         #각 센서가 저장하는 값
         self.__cmd_queue = [] #명령을 저장할 큐
+        self.__avoid_queue = []
         self.__info_8889Sensor_tof = None #ToF
         self.__info_8889Sensor_cmd = None #수행확인명령
         self.__info_11111Sensor_frame = None #Frame
@@ -84,6 +85,8 @@ class Planner:
     #메인 스레드
     def __func_planner(self):
         self.__printf("실행",sys._getframe().f_code.co_name)
+        thr_send = threading.Thread(target=self.__func_send,daemon=True)
+        
         try:
             while not self.__stop_event.is_set() and not hasattr(self.__main, 'virtual_controller'):
                 self.__printf("대기중",sys._getframe().f_code.co_name)
@@ -102,10 +105,15 @@ class Planner:
                     real_coor = self.__create_real_coor(object_coor, tof, screen_size)                        
                     
                     #3) 3차원 좌표를 바탕으로 회피 명령 생성
-                    avd_cmd = self.__create_avd_cmd(real_coor)
+                    self.__avd_cmd = self.__create_avd_cmd(real_coor)
+                    if len(self.__cmd_queue) < 3:
+                        self.insert_cmd_queue(self.__avd_cmd)
+                        self.insert_cmd_queue("stop")
                     
-                    #4) 생성한 명령을 queue에 저장
-                    self.insert_cmd_queue(avd_cmd)
+                    # try:
+                    #     thr_send.start()
+                    # except:
+                    #     thr_send = threading.Thread(target=self.__func_send,daemon=True)
 
 
         except Exception as e:
@@ -120,6 +128,12 @@ class Planner:
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
             print(traceback.format_exc())
+    
+    def __func_send(self):
+            self.insert_cmd_queue(self.__avd_cmd)
+            sleep(0.5)
+            self.insert_cmd_queue("stop")
+    
     
     
     #frame을 받아오는 스레드
@@ -162,13 +176,6 @@ class Planner:
         cnt = 0
         try:
             while not self.__stop_event.is_set():
-                # self.insert_cmd_queue("stop")
-                # cnt += 1
-                # sleep(1)
-                
-                # if cnt == 5:
-                #     self.insert_cmd_queue("command")
-                #     cnt = 0
                 self.socket8889.sendto("command".encode(),self.tello_address)
                 sleep(5)
 
@@ -233,17 +240,17 @@ class Planner:
         return object_coor
 
 
-    def __create_avd_cmd(self,object_coor:tuple): 
+    def __create_avd_cmd(self,real_coor:tuple): 
         """
         -입력값 - object_coor: (tof값[cm], 물체중심의 가로좌표[cm], 물체중심의 세로좌표[cm], 물체의 가로길이[cm], 물체의 세로길이[cm])
         -출력값 - avd_cmd: str (방향, 이동거리를 포함)
         """
-        if object_coor is None or object_coor[0]>self.threshold_distance:
+        if real_coor is None or real_coor[0]>self.threshold_distance:
             return None
         
-        tof_val = object_coor[0]
-        real_center_coor = object_coor[1]
-        real_length = object_coor[2]
+        tof_val = real_coor[0]
+        real_center_coor = real_coor[1]
+        real_length = real_coor[2]
         
         #계산된 회피거리를 저장할 변수
         horizontal_move = None
@@ -287,7 +294,7 @@ class Planner:
             vertical_move = 0
             
             
-        #회피명령 생성 / 최소 움직임은 base_move_distance = 20cm
+        #회피명령 생성 / 최소 움직임은 base_move_distance = 40cm
         avd_cmd = None
         
         if horizontal_move == 0 and vertical_move == 0:
