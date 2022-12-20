@@ -2,7 +2,6 @@
 import threading
 import sys
 import socket
-from time import sleep
 from CAD.Plan.Planner import Planner
 from CAD.Tello.Tello8889Sensor import Tello8889Sensor
 from CAD.Tello.Tello11111Sensor import Tello11111Sensor
@@ -44,7 +43,8 @@ class Main:
         self.stop_event = threading.Event()
         
         #Tello의 주소, 포트
-        self.tello_address = ('192.168.10.1',8889) #텔로에게 접속했을 때, 텔로의 IP주소
+        # self.tello_address = ('192.168.10.1',8889) #텔로에게 접속했을 때, 텔로의 IP주소
+        self.tello_address = ('192.168.137.175',8889) #텔로에게 접속했을 때, 텔로의 IP주소
         
         #연결 정의
         print("드론 연결 대기중...")

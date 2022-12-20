@@ -9,8 +9,8 @@
 def is_tof_val(val:str):
     
     val_list = val.split()
-    if len(val_list)==2 and val_list[0] == 'tof':
-        int_val = int(val_list[1])
+    if val_list[0] == 'tof' and val_list[-1].isdigit():
+        int_val = int(val_list[-1])
         if 0 <= int_val <= 8192:
             return True
         else:

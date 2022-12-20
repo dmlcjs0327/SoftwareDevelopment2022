@@ -38,10 +38,11 @@ class Tello8889Actor(Actor):
             
             while not self.__stop_event.is_set():
                 cmd = self.take_cmd_from_planner()
+                if cmd is None: continue
                 safe_cmd = self.change_cmd_is_safe(cmd)
                 drone_cmd = self.change_cmd_for_drone(safe_cmd)
                 self.send_to_actuator(drone_cmd)
-                sleep(0.05)
+                sleep(0.01)
 
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
@@ -88,6 +89,9 @@ class Tello8889Actor(Actor):
         cmd를 Actuator에게 전송한다
         """
         if cmd is not None:
+            #TEST
+            if cmd.decode() != "EXT tof?":
+                self.__printf("send: {}".format(cmd),sys._getframe().f_code.co_name)
             self.__socket.sendto(cmd, self.__tello_address)
     
     

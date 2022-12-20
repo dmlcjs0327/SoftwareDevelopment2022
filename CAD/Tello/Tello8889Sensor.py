@@ -78,7 +78,7 @@ class Tello8889Sensor(Sensor):
         
         if ValueChecker.is_tof_val(info):
             #ToF 값은 "tof 100" 형태로 들어온다
-            info = ValueChanger.change_mm_to_cm(int(info.split()[1]))
+            info = ValueChanger.change_mm_to_cm(int(info.split()[-1]))
             if info > 60:
                 info = 1000
             self.__planner.set_info_8889Sensor_tof(info)

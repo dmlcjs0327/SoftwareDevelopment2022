@@ -37,6 +37,10 @@ class TelloVirtualController:
         #Tello 조작시 동작범위
         self.__cm = 50
         self.__degree = 50
+        
+        #화면, tof를 갱신할 시간
+        self.__renewal_screen_time = 1/50 #50 fps
+        self.__renewal_tof_time = 0.3
 
         #Controller의 명령을 저장할 queue
         self.__controller_queue = []
@@ -74,6 +78,7 @@ class TelloVirtualController:
 
         #키보드 버튼들과 Tello 동작을 바인딩
         self.__keyboard_connection = tkinter.Frame(self.root, width=100, height=2)
+        self.__keyboard_connection.bind('<KeyPress-q>', self.__on_keypress_q)
         self.__keyboard_connection.bind('<KeyPress-w>', self.__on_keypress_w)
         self.__keyboard_connection.bind('<KeyPress-s>', self.__on_keypress_s)
         self.__keyboard_connection.bind('<KeyPress-a>', self.__on_keypress_a)
@@ -105,6 +110,11 @@ class TelloVirtualController:
 
 
     #=====키보드를 입력했을 때 실행될 함수들=====
+    def __on_keypress_q(self, event):
+        self.__printm("Q", "stop")
+        self.__send_cmd("stop")
+    
+    
     def __on_keypress_w(self, event):
         self.__printm("W","up")
         self.__move('up',self.__cm)
@@ -170,7 +180,7 @@ class TelloVirtualController:
             while not self.__thread_stop_event.is_set():
                 tof = self.__planner.get_info_8889Sensor_tof()
                 self.__text_tof.config(text = "ToF: {} cm".format(tof))
-                sleep(0.3)
+                sleep(self.__renewal_tof_time)
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
             print(traceback.format_exc())
@@ -202,6 +212,7 @@ class TelloVirtualController:
                 else:
                     self.__panel_image.configure(image=image)
                     self.__panel_image.image = image
+                # sleep(self.__renewal_screen_time)
 
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
