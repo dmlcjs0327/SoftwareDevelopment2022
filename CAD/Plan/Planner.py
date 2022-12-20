@@ -128,7 +128,7 @@ class Planner:
         cnt = 0
         try:
             while not self.__stop_event.is_set():
-                self.insert_cmd_queue("stop")
+                # self.insert_cmd_queue("stop")
                 cnt += 1
                 sleep(1)
                 

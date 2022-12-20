@@ -12,8 +12,11 @@ class Tello8889Actor(Actor):
     Tello 8889 port의 값을 받아오는 클래스
     """
     
+    
+    
     def __init__(self, main):
         self.__printc("생성")
+        self.INTERVAL = 0.4
         self.__stop_event = main.stop_event
         self.__main = main
         self.__tello_address = main.tello_address
@@ -89,11 +92,17 @@ class Tello8889Actor(Actor):
         cmd를 Actuator에게 전송한다
         """
         if cmd is not None:
-            # #TEST
-            # if cmd.decode() != "EXT tof?":
-            #     self.__printf("send: {}".format(cmd),sys._getframe().f_code.co_name)
-            # #TEST
+            #TEST
+            if cmd.decode() != "EXT tof?":
+                self.__printf("send: {}".format(cmd),sys._getframe().f_code.co_name)
+            #TEST
             self.__socket.sendto(cmd, self.__tello_address)
+            # decode_cmd = cmd.decode()
+            # decode_cmd_list = decode_cmd.split(" ")
+            
+            # if decode_cmd_list[0] == "rc" and decode_cmd != "rc 0 0 0 0":
+            #     sleep(self.INTERVAL)
+            #     self.__socket.sendto("rc 0 0 0 0".encode(), self.__tello_address)
             
             decode_cmd = cmd.decode()
             if decode_cmd in ["takeoff", "land"]:

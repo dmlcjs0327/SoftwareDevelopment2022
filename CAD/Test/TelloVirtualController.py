@@ -41,17 +41,15 @@ class TelloVirtualController:
         self.__degree = 50
         
         #화면, tof를 갱신할 시간
-        self.__renewal_screen_time = 1/50 #50 fps
         self.__renewal_tof_time = 0.3
-
-        #Controller의 명령을 저장할 queue
-        self.__controller_queue = []
 
         #queue에 동시접근을 방지하기 위한 lock
         self.__lock = threading.Lock()
 
         #화면 기본 설정
         self.root = tkinter.Tk()  # GUI 화면 객체 생성
+        # self.root.geometry("-10+0")
+        # self.root.attributes('-fullscreen',True)
         self.root.wm_title("CAD TEST for RMTT") #GUI 화면의 title 설정  
         self.root.wm_protocol("WM_DELETE_WINDOW", self.__onClose) #종료버튼을 클릭시 실행할 함수 설정
 
@@ -230,46 +228,14 @@ class TelloVirtualController:
     def __send_cmd(self, msg:str):
         # self.__lock.acquire() #락 획득
         try:
-            data = msg.encode('utf-8')
-            self.insert_controller_queue(data)
+            self.__planner.insert_cmd_queue(msg)
+            sleep(0.4)
+            self.__planner.insert_cmd_queue("stop")
 
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
             print(traceback.format_exc())
         # self.__lock.release() #락 해제
-        
-    def __send0_cmd(self, msg:str):
-        # self.__lock.acquire() #락 획득
-        try:
-            data = msg.encode('utf-8')
-            self.insert0_controller_queue(data)
-
-        except Exception as e:
-            self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
-            print(traceback.format_exc())
-
-        # self.__lock.release() #락 해제
-
-
-
-    #=====controller_queue에 접근하는 함수=====
-    def insert_controller_queue(self,data:str):
-        # self.__lock.acquire()
-        self.__controller_queue.append(data)
-        # self.__lock.release()
-    
-    def insert0_controller_queue(self,data:str):
-        # self.__lock.acquire()
-        self.__controller_queue.insert(0,data)
-        # self.__lock.release()
-    
-    def pop_controller_queue(self):
-        # self.__lock.acquire()
-        return_data = None
-        if len(self.__controller_queue) > 0: 
-            return_data = self.__controller_queue.pop(0)
-        # self.__lock.release()
-        return return_data
 
 
 

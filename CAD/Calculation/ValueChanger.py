@@ -268,10 +268,14 @@ def change_to_safe_cmd(cmd:str, tof:int, threshold:int):
     #이동하고자 하는 거리
     move_distance = int(cmd_list[1])
     
+    
     #계산된 거리
     new_move_distance = rest_safe_distance - move_distance
+    if tof >= 1000:
+        new_move_distance = move_distance
+        return "forward {}".format(new_move_distance)
+        
     if new_move_distance < 20:
         return "stop"
 
-    else:
-        return "forward {}".format(new_move_distance)
+    return "forward {}".format(new_move_distance)

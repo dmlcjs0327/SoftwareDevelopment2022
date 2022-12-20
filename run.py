@@ -18,7 +18,7 @@ from CAD.Test.TelloVirtualController import TelloVirtualController
 - 출력방식(유선, 무선 및 포트)에 따라 Act 계열 클래스 생성
 
 - Sense 계열 클래스들은 
-    1) 데이터를 가져오고
+    1) 데이터를 가져오고'
     2) 데이터를 Planner가 받아들일 수 있는 정보로 변경하고V2
     3) Planner에 저장
     
@@ -77,7 +77,6 @@ class Main:
         self.tello8889sensor = Tello8889Sensor(self)
         self.tello11111sensor = Tello11111Sensor(self)
         self.tello8889actor = Tello8889Actor(self)
-        self.telloVCsensor = TelloVCSensor(self)
         
         self.virtual_controller = TelloVirtualController(self)
         

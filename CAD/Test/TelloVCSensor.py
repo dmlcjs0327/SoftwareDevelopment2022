@@ -37,7 +37,7 @@ class TelloVCSensor(Sensor):
                 data = self.take_data_from_sensor()
                 info = self.change_data_to_info(data)
                 self.save_to_planner(info)
-                sleep(0.3)
+                sleep(0.1)
 
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
