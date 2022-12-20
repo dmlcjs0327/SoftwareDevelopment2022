@@ -44,7 +44,7 @@ class Planner:
         self.safe_constant = 20
         
         #각 센서가 저장하는 값
-        self.__cmd_queue = [] #명령을 저장할 큐
+        self.__cmd_queue = None #명령을 저장할 큐
         self.__info_8889Sensor_tof = None #ToF
         self.__info_8889Sensor_cmd = None #수행확인명령
         self.__info_11111Sensor_frame = None #Frame
@@ -102,6 +102,7 @@ class Planner:
                     
                     #4) 생성한 명령을 queue에 저장
                     self.insert_cmd_queue(avd_cmd)
+                sleep(0.1)
 
 
         except Exception as e:
@@ -314,15 +315,11 @@ class Planner:
     #cmd_queue
     def pop_cmd_queue(self):
         # self.__lock_cmd_queue.acquire()
-        info = None
-        if len(self.__cmd_queue)>0:
-            info = self.__cmd_queue.pop(0)
-        # self.__lock_cmd_queue.release()
-        return info
+        return self.__cmd_queue
     
     def insert_cmd_queue(self, info):
         # self.__lock_cmd_queue.acquire()
-        self.__cmd_queue.append(info)
+        self.__cmd_queue = info
         # self.__lock_cmd_queue.release()
         
     #8889Sensor_tof   

@@ -42,6 +42,7 @@ class TelloVirtualController:
         
         #화면, tof를 갱신할 시간
         self.__renewal_tof_time = 0.3
+        self.__renewal_screen_time = 1/60
 
         #queue에 동시접근을 방지하기 위한 lock
         self.__lock = threading.Lock()
@@ -214,7 +215,8 @@ class TelloVirtualController:
                 else:
                     self.__panel_image.configure(image=image)
                     self.__panel_image.image = image
-                # sleep(self.__renewal_screen_time)
+                sleep(self.__renewal_screen_time)
+
 
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)

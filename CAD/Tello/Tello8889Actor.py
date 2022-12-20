@@ -17,6 +17,7 @@ class Tello8889Actor(Actor):
     def __init__(self, main):
         self.__printc("생성")
         self.INTERVAL = 0.4
+        self.__pre_cmd = None
         self.__stop_event = main.stop_event
         self.__main = main
         self.__tello_address = main.tello_address
@@ -41,12 +42,15 @@ class Tello8889Actor(Actor):
             
             while not self.__stop_event.is_set():
                 cmd = self.take_cmd_from_planner()
-                if cmd is None: continue
+                if cmd is None or cmd == self.__pre_cmd:
+                    continue
+                self.__pre_cmd = cmd
                 safe_cmd = self.change_cmd_is_safe(cmd)
                 drone_cmd = self.change_cmd_for_drone(safe_cmd)
                 self.send_to_actuator(drone_cmd)
                 sleep(0.1)
-
+            
+        
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
             print(traceback.format_exc())
