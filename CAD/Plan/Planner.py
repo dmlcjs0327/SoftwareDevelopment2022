@@ -6,6 +6,7 @@ from time import sleep
 from CAD.Calculation import ValueChanger
 from CAD.ObjectDetector.YOLOv5 import YOLOv5
 from numpy import *
+import cv2
 
 
 
@@ -44,7 +45,7 @@ class Planner:
         self.safe_constant = 20
         
         #각 센서가 저장하는 값
-        self.__cmd_queue = None #명령을 저장할 큐
+        self.__cmd_queue = [] #명령을 저장할 큐
         self.__info_8889Sensor_tof = None #ToF
         self.__info_8889Sensor_cmd = None #수행확인명령
         self.__info_11111Sensor_frame = None #Frame
@@ -67,6 +68,9 @@ class Planner:
         #스레드 실행
         self.__thr_planner = threading.Thread(target=self.__func_planner, daemon=True)
         self.__thr_planner.start()
+        
+        # self.__thr_sensor = threading.Thread(target=self.__func_sensor, daemon=True)
+        # self.__thr_sensor.start()
         
         self.__thr_stay_connection = threading.Thread(target=self.__func_stay_connection, daemon=True)
         self.__thr_stay_connection.start()
@@ -102,7 +106,6 @@ class Planner:
                     
                     #4) 생성한 명령을 queue에 저장
                     self.insert_cmd_queue(avd_cmd)
-                sleep(0.1)
 
 
         except Exception as e:
@@ -119,6 +122,36 @@ class Planner:
             print(traceback.format_exc())
     
     
+    #frame을 받아오는 스레드
+    # def __func_sensor(self):
+    #     self.__printf("실행",sys._getframe().f_code.co_name)
+    #     try:
+    #         while not self.__stop_event.is_set() and not hasattr(self.__main, 'virtual_controller'):
+    #             self.__printf("대기중",sys._getframe().f_code.co_name)
+    #             sleep(1)
+            
+    #         self.__virtual_controller = self.__main.virtual_controller
+    #         cap = cv2.VideoCapture("udp://"+self.tello_address[0]+":"+"11111")
+            
+    #         while not self.__stop_event.is_set():
+    #             ret, frame = cap.read()
+    #             self.set_info_11111Sensor_frame(frame)
+    #             cv2.waitKey(10)
+
+    #     except Exception as e:
+    #         self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
+    #         print(traceback.format_exc())
+        
+    #     self.__printf("종료",sys._getframe().f_code.co_name)
+        
+    #     #virtual controller 종료
+    #     try:
+    #         self.__virtual_controller.onClose()
+    #     except Exception as e:
+    #         self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
+    #         print(traceback.format_exc())
+            
+            
     #Tello에게 15초 간격으로 command를 전송하는 함수
     def __func_stay_connection(self):
         self.__printf("실행",sys._getframe().f_code.co_name)
@@ -130,12 +163,14 @@ class Planner:
         try:
             while not self.__stop_event.is_set():
                 # self.insert_cmd_queue("stop")
-                cnt += 1
-                sleep(1)
+                # cnt += 1
+                # sleep(1)
                 
-                if cnt == 5:
-                    self.insert_cmd_queue("command")    
-                    cnt = 0
+                # if cnt == 5:
+                #     self.insert_cmd_queue("command")
+                #     cnt = 0
+                self.socket8889.sendto("command".encode(),self.tello_address)
+                sleep(5)
 
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
@@ -151,7 +186,6 @@ class Planner:
             print(traceback.format_exc())
 
 
-    #Tello에게 0.1초 간격으로 EXT tof?를 전송하는 함수
     def __func_request_tof(self):
         self.__printf("실행",sys._getframe().f_code.co_name)
         """
@@ -159,7 +193,8 @@ class Planner:
         """
         try:
             while not self.__stop_event.is_set():
-                self.insert_cmd_queue('EXT tof?')
+                # self.insert_cmd_queue('EXT tof?')
+                self.socket8889.sendto("EXT tof?".encode(),self.tello_address)
                 sleep(0.2)
 
         except Exception as e:
@@ -315,11 +350,14 @@ class Planner:
     #cmd_queue
     def pop_cmd_queue(self):
         # self.__lock_cmd_queue.acquire()
-        return self.__cmd_queue
+        data = None
+        if len(self.__cmd_queue)>0:
+            data = self.__cmd_queue.pop(0)
+        return data
     
     def insert_cmd_queue(self, info):
         # self.__lock_cmd_queue.acquire()
-        self.__cmd_queue = info
+        self.__cmd_queue.append(info)
         # self.__lock_cmd_queue.release()
         
     #8889Sensor_tof   

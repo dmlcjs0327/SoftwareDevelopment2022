@@ -42,14 +42,13 @@ class TelloVirtualController:
         
         #화면, tof를 갱신할 시간
         self.__renewal_tof_time = 0.3
-        self.__renewal_screen_time = 1/60
 
         #queue에 동시접근을 방지하기 위한 lock
         self.__lock = threading.Lock()
 
         #화면 기본 설정
         self.root = tkinter.Tk()  # GUI 화면 객체 생성
-        # self.root.geometry("-10+0")
+        self.root.geometry("-10+0")
         # self.root.attributes('-fullscreen',True)
         self.root.wm_title("CAD TEST for RMTT") #GUI 화면의 title 설정  
         self.root.wm_protocol("WM_DELETE_WINDOW", self.__onClose) #종료버튼을 클릭시 실행할 함수 설정
@@ -103,7 +102,6 @@ class TelloVirtualController:
     #=====버튼을 클릭했을 때 실행될 함수들=====
     def __land(self): #return: Tello의 receive 'OK' or 'FALSE'
         self.__send_cmd('land')
-
 
     def __takeoff(self): #return: Tello의 receive 'OK' or 'FALSE'
          self.__send_cmd('takeoff')
@@ -198,14 +196,6 @@ class TelloVirtualController:
                 # ORIGIN START
                 image:ImageTk.PhotoImage = self.__planner.get_info_11111Sensor_image()
                 # ORIGIN END
-                
-                # #TEST START
-                # frame = self.__planner.get_info_11111Sensor_frame()
-                # if frame is None or frame.size== 0: 
-                #     continue
-                # image = Image.fromarray(frame)
-                # image = ImageTk.PhotoImage(image)
-                # #TEST END
 
                 if self.__panel_image is None: 
                     self.__panel_image:tkinter.Label = tkinter.Label(image=image)
@@ -215,7 +205,6 @@ class TelloVirtualController:
                 else:
                     self.__panel_image.configure(image=image)
                     self.__panel_image.image = image
-                sleep(self.__renewal_screen_time)
 
 
         except Exception as e:
@@ -230,16 +219,27 @@ class TelloVirtualController:
     def __send_cmd(self, msg:str):
         # self.__lock.acquire() #락 획득
         try:
-            self.__planner.insert_cmd_queue(msg)
+            self.insert_controller_queue(msg)
             sleep(0.4)
-            self.__planner.insert_cmd_queue("stop")
+            self.insert_controller_queue("stop")
 
         except Exception as e:
             self.__printf("ERROR {}".format(e),sys._getframe().f_code.co_name)
             print(traceback.format_exc())
         # self.__lock.release() #락 해제
 
-
+    # def insert_controller_queue(self,cmd):
+    #     self.__controller_queue.append(cmd)
+    
+    # def pop_controller_queue(self):
+    #     data = None
+    #     if len(self.__controller_queue)>0:
+    #         data = self.__controller_queue.pop(0)
+    #     return data
+    def insert_controller_queue(self,cmd):
+        self.__planner.insert_cmd_queue(cmd)
+    
+    
 
     #=====종료버튼을 클릭시 실행할 함수=====
     def __onClose(self):

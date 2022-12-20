@@ -2,6 +2,8 @@
 import threading
 import sys
 import socket
+import cv2
+from multiprocessing import Process, Pipe
 from CAD.Plan.Planner import Planner
 from CAD.Tello.Tello8889Sensor import Tello8889Sensor
 from CAD.Tello.Tello11111Sensor import Tello11111Sensor
@@ -76,7 +78,7 @@ class Main:
         
         self.tello8889sensor = Tello8889Sensor(self)
         self.tello11111sensor = Tello11111Sensor(self)
-        self.tello8889actor = Tello8889Actor(self)
+        # self.tello8889actor = Tello8889Actor(self)
         
         self.virtual_controller = TelloVirtualController(self)
         
