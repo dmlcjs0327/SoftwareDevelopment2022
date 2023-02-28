@@ -63,6 +63,7 @@ class Tello11111Sensor(Sensor):
         data:bytes = self.__socket.recv(2048)
         self.__packet_data += data
         
+        
     
     def change_data_to_info(self):
         """
